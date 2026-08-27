@@ -3,3 +3,9 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - default-service-account.yaml
+  - secret-store.yaml
+  - workload-hardening.yaml
+  - verify-images.yaml
+  - default-deny-network-policy.yaml
+  - allow-dns-egress.yaml

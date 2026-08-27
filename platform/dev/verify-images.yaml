@@ -1,0 +1,57 @@
+apiVersion: policies.kyverno.io/v1
+kind: NamespacedImageValidatingPolicy
+metadata:
+  name: verify-as-bank-images
+  namespace: as-bank-dev
+spec:
+  validationActions:
+    - Deny
+
+  failurePolicy: Fail
+
+  webhookConfiguration:
+    timeoutSeconds: 30
+
+  evaluation:
+    background:
+      enabled: false
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+
+  matchImageReferences:
+    - glob: "*.dkr.ecr.us-east-1.amazonaws.com/as-bank/*"
+
+  credentials:
+    allowInsecureRegistry: false
+    providers:
+      - amazon
+
+  attestors:
+    - name: githubRelease
+      cosign:
+        keyless:
+          identities:
+            - issuer: https://token.actions.githubusercontent.com
+              subject: https://github.com/sai-pillalamarri/as-bank-app/.github/workflows/reusable-image-release.yml@refs/heads/main
+
+  validationConfigurations:
+    mutateDigest: false
+    required: true
+    verifyDigest: true
+
+  validations:
+    - expression: >-
+        images.containers
+          .map(image, verifyImageSignatures(image, [attestors.githubRelease]))
+          .all(count, count > 0)
+      message: Image must carry a valid AS Bank release signature.

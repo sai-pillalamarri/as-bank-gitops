@@ -1,0 +1,121 @@
+apiVersion: policies.kyverno.io/v1
+kind: NamespacedValidatingPolicy
+metadata:
+  name: workload-hardening
+  namespace: as-bank-dev
+spec:
+  validationActions:
+    - Deny
+
+  failurePolicy: Fail
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+
+  variables:
+    - name: containers
+      expression: >-
+        object.spec.containers
+        + object.spec.?initContainers.orValue([])
+        + object.spec.?ephemeralContainers.orValue([])
+
+    - name: images
+      expression: >-
+        variables.containers.map(container, parseImageReference(container.image))
+
+    - name: labels
+      expression: >-
+        object.metadata.?labels.orValue({})
+
+  validations:
+    - expression: >-
+        ['app', 'version', 'environment', 'team', 'cost-center']
+          .all(label, label in variables.labels && variables.labels[label] != '')
+      message: Pods must carry the standard AS Bank workload labels.
+
+    - expression: >-
+        variables.labels['environment'] == 'dev'
+      message: Pods in as-bank-dev must have environment=dev.
+
+    - expression: >-
+        variables.images.all(image, image.containsDigest())
+      message: Container images must use an immutable digest.
+
+    - expression: >-
+        variables.containers
+          .map(container, image(container.image))
+          .all(ref,
+            ref.registry().matches('^[0-9]{12}\\.dkr\\.ecr\\.us-east-1\\.amazonaws\\.com$')
+            && ref.repository().startsWith('as-bank/')
+          )
+      message: Container images must come from an AS Bank ECR repository.
+
+    - expression: >-
+        (
+          has(object.spec.securityContext)
+          && has(object.spec.securityContext.runAsNonRoot)
+          && object.spec.securityContext.runAsNonRoot
+        )
+        ||
+        variables.containers.all(container,
+          has(container.securityContext)
+          && has(container.securityContext.runAsNonRoot)
+          && container.securityContext.runAsNonRoot
+        )
+      message: Containers must run as non-root.
+
+    - expression: >-
+        variables.containers.all(container,
+          has(container.securityContext)
+          && has(container.securityContext.readOnlyRootFilesystem)
+          && container.securityContext.readOnlyRootFilesystem
+        )
+      message: Containers must use a read-only root filesystem.
+
+    - expression: >-
+        variables.containers.all(container,
+          has(container.securityContext)
+          && has(container.securityContext.capabilities)
+          && has(container.securityContext.capabilities.drop)
+          && container.securityContext.capabilities.drop.exists(capability, capability == 'ALL')
+        )
+      message: Containers must drop all Linux capabilities.
+
+    - expression: >-
+        variables.containers.all(container,
+          !has(container.securityContext)
+          || !has(container.securityContext.privileged)
+          || container.securityContext.privileged == false
+        )
+      message: Privileged containers are not allowed.
+
+    - expression: >-
+        variables.containers.all(container,
+          has(container.resources.requests)
+          && has(container.resources.limits)
+          && 'cpu' in container.resources.requests
+          && 'memory' in container.resources.requests
+          && 'cpu' in container.resources.limits
+          && 'memory' in container.resources.limits
+        )
+      message: Containers must define CPU and memory requests and limits.
+
+    - expression: >-
+        (!has(object.spec.hostNetwork) || object.spec.hostNetwork == false)
+        && (!has(object.spec.hostPID) || object.spec.hostPID == false)
+        && (!has(object.spec.hostIPC) || object.spec.hostIPC == false)
+      message: Pods may not use host network, PID, or IPC namespaces.
+
+    - expression: >-
+        !has(object.spec.volumes)
+        || object.spec.volumes.all(volume, !has(volume.hostPath))
+      message: hostPath volumes are not allowed.
