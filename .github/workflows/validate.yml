@@ -1,0 +1,65 @@
+name: GitOps validation
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Manifest validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Build Kustomize trees
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubectl kustomize bootstrap/dev >/tmp/bootstrap-dev.yaml
+          kubectl kustomize bootstrap/prod >/tmp/bootstrap-prod.yaml
+          kubectl kustomize platform/dev >/tmp/platform-dev.yaml
+          kubectl kustomize platform/prod >/tmp/platform-prod.yaml
+          kubectl kustomize apps/dev >/tmp/apps-dev.yaml
+          kubectl kustomize apps/prod >/tmp/apps-prod.yaml
+
+      - name: Install kubeconform
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="0.8.0"
+          archive="kubeconform-linux-amd64.tar.gz"
+          base="https://github.com/yannh/kubeconform/releases/download/v${version}"
+
+          curl -fsSLO "${base}/${archive}"
+          curl -fsSLO "${base}/CHECKSUMS"
+
+          grep " ${archive}$" CHECKSUMS | sha256sum -c -
+          sudo tar -xzf "${archive}" -C /usr/local/bin kubeconform
+
+      - name: Validate Kubernetes manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          kubeconform \
+            -strict \
+            -summary \
+            -ignore-missing-schemas \
+            -kubernetes-version 1.35.0 \
+            /tmp/bootstrap-dev.yaml \
+            /tmp/bootstrap-prod.yaml \
+            /tmp/platform-dev.yaml \
+            /tmp/platform-prod.yaml \
+            /tmp/apps-dev.yaml

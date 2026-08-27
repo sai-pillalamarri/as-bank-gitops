@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitops-proof
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitops-proof
+  template:
+    metadata:
+      labels:
+        app: gitops-proof
+        version: stage5
+        environment: dev
+        team: platform
+        cost-center: learning
+    spec:
+      containers:
+        - name: proof
+          image: registry.k8s.io/pause@sha256:ee6521f290b2168b6e0935a181d4cff9be1ac3f505666ef0e3c98fae8199917a
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              cpu: 50m
+              memory: 32Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
