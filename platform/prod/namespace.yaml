@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: as-bank-prod
+  labels:
+    environment: prod
+    team: platform
+    cost-center: learning
