@@ -11,7 +11,7 @@ spec:
     metadata:
       labels:
         app: gitops-proof
-        version: stage5
+        version: stage5-pr-proof
         environment: dev
         team: platform
         cost-center: learning
