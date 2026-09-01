@@ -1,0 +1,34 @@
+{{- range $name, $workload := .Values.workloads }}
+{{- if $workload.enabled }}
+{{- $context := dict "root" $ "name" $name "workload" $workload }}
+
+{{ include "as-bank-library.serviceAccount" $context }}
+---
+
+{{- if $workload.database.enabled }}
+{{ include "as-bank-library.externalSecret" $context }}
+---
+{{- end }}
+
+{{- if $workload.runtimeConfig.enabled }}
+{{ include "as-bank-library.runtimeConfig" $context }}
+---
+{{- end }}
+
+{{ include "as-bank-library.service" $context }}
+---
+
+{{ include "as-bank-library.deployment" $context }}
+---
+
+{{ include "as-bank-library.pdb" $context }}
+---
+
+{{ include "as-bank-library.hpa" $context }}
+---
+
+{{ include "as-bank-library.networkPolicy" $context }}
+---
+
+{{- end }}
+{{- end }}

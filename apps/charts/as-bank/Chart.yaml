@@ -1,0 +1,10 @@
+apiVersion: v2
+name: as-bank
+description: AS Bank application workloads.
+type: application
+version: 0.1.0
+
+dependencies:
+  - name: as-bank-library
+    version: 0.1.0
+    repository: file://../as-bank-library

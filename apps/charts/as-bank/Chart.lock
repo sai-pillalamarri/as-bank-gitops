@@ -1,0 +1,6 @@
+dependencies:
+- name: as-bank-library
+  repository: file://../as-bank-library
+  version: 0.1.0
+digest: sha256:a63b6f0ede95b562ea88126d64b8bcd4de4ecf7b8dfb9ad7c0d8bd23fc0e2d26
+generated: "2026-08-30T22:38:33.9549976+05:30"
