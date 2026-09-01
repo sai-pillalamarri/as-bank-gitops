@@ -1,0 +1,180 @@
+global:
+  namespace: as-bank-dev
+  environment: dev
+  team: application
+  costCenter: learning
+
+  cognito:
+    issuer: "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_IyPZIF1zh"
+    clientId: "1imfotcestj1eq7e2hlpotl77n"
+
+  network:
+    vpcCidr: 10.10.0.0/16
+
+workloads:
+  customer-service:
+    enabled: true
+    kind: java
+    version: "3d1db4ca9de8"
+
+    image:
+      repository: as-bank/customer-service
+      digest: sha256:3d1db4ca9de8abca3f939dac95e75c7833073d41c119ad9c4f1c3c5d9ac0295f
+
+    database:
+      enabled: true
+      remoteSecret: as-bank/dev/database/customer-service
+
+    runtimeConfig:
+      enabled: false
+
+    probes:
+      port: management
+      startupPath: /actuator/health/liveness
+      readinessPath: /actuator/health/readiness
+      livenessPath: /actuator/health/liveness
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 2
+      cpuUtilization: 70
+
+    network:
+      ingressFrom:
+        - account-service
+      egressTo: []
+      allowHttpsEgress: true
+
+  account-service:
+    enabled: true
+    kind: java
+    version: "79ffd30c1aa5"
+
+    image:
+      repository: as-bank/account-service
+      digest: sha256:79ffd30c1aa56db0b80d13c4d0d1b71d28079ce242616b537bfddc73a8480edd
+
+    database:
+      enabled: true
+      remoteSecret: as-bank/dev/database/account-service
+
+    runtimeConfig:
+      enabled: false
+
+    probes:
+      port: management
+      startupPath: /actuator/health/liveness
+      readinessPath: /actuator/health/readiness
+      livenessPath: /actuator/health/liveness
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 2
+      cpuUtilization: 70
+
+    network:
+      ingressFrom:
+        - transaction-service
+      egressTo:
+        - customer-service
+      allowHttpsEgress: true
+
+  transaction-service:
+    enabled: true
+    kind: java
+    version: "c81b95fba01f"
+
+    image:
+      repository: as-bank/transaction-service
+      digest: sha256:c81b95fba01f55dbc5d580b5499cb085e26a02b606f3fe9667199d334e3a365a
+
+    database:
+      enabled: true
+      remoteSecret: as-bank/dev/database/transaction-service
+
+    runtimeConfig:
+      enabled: false
+
+    probes:
+      port: management
+      startupPath: /actuator/health/liveness
+      readinessPath: /actuator/health/readiness
+      livenessPath: /actuator/health/liveness
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 2
+      cpuUtilization: 70
+
+    network:
+      ingressFrom: []
+      egressTo:
+        - account-service
+      allowHttpsEgress: true
+
+  frontend:
+    enabled: true
+    kind: frontend
+    version: "e72df72e41da"
+
+    image:
+      repository: as-bank/frontend
+      digest: sha256:e72df72e41da12cefc02972384617cfd0b959353b3def795a288ce51070079a2
+
+    database:
+      enabled: false
+      remoteSecret: ""
+
+    runtimeConfig:
+      enabled: true
+      customerApiBaseUrl: https://api-dev.aslearnings.online
+      accountApiBaseUrl: https://api-dev.aslearnings.online
+      transactionApiBaseUrl: https://api-dev.aslearnings.online
+
+    probes:
+      port: http
+      startupPath: /
+      readinessPath: /
+      livenessPath: /
+
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+    autoscaling:
+      minReplicas: 1
+      maxReplicas: 2
+      cpuUtilization: 70
+
+    network:
+      ingressFrom: []
+      egressTo: []
+      allowHttpsEgress: false

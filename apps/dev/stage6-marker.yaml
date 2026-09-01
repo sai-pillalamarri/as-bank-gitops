@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: stage6-hardening
-  namespace: as-bank-dev
-data:
-  status: hardening

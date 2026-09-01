@@ -1,0 +1,16 @@
+global:
+  namespace: as-bank-dev
+  environment: dev
+  team: application
+  costCenter: learning
+
+  imageRegistry: ""
+
+  cognito:
+    issuer: ""
+    clientId: ""
+
+  network:
+    vpcCidr: 10.10.0.0/16
+
+workloads: {}

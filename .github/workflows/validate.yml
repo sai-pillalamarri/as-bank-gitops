@@ -33,6 +33,25 @@ jobs:
           kubectl kustomize apps/dev >/tmp/apps-dev.yaml
           kubectl kustomize apps/prod >/tmp/apps-prod.yaml
 
+      - name: Render application chart
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          helm dependency build apps/charts/as-bank
+
+          helm lint \
+            apps/charts/as-bank \
+            --values apps/charts/as-bank/values-dev.yaml \
+            --set-string global.imageRegistry=000000000000.dkr.ecr.us-east-1.amazonaws.com
+
+          helm template \
+            as-bank-dev \
+            apps/charts/as-bank \
+            --values apps/charts/as-bank/values-dev.yaml \
+            --set-string global.imageRegistry=000000000000.dkr.ecr.us-east-1.amazonaws.com \
+            >/tmp/workloads-dev.yaml
+
       - name: Install kubeconform
         shell: bash
         run: |
@@ -62,4 +81,6 @@ jobs:
             /tmp/bootstrap-prod.yaml \
             /tmp/platform-dev.yaml \
             /tmp/platform-prod.yaml \
-            /tmp/apps-dev.yaml
+            /tmp/apps-dev.yaml \
+            /tmp/apps-prod.yaml \
+            /tmp/workloads-dev.yaml

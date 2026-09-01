@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: as-bank-workloads-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/sai-pillalamarri/as-bank-gitops.git
+    targetRevision: main
+    path: apps/charts/as-bank
+
+    plugin:
+      name: as-bank-helm
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: as-bank-dev
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=false
