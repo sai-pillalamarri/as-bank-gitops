@@ -164,6 +164,13 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
+
+            {{- if eq .workload.kind "java" }}
+            # The backend images create the asbank user with UID 10001.
+            # Kubernetes needs the numeric UID to enforce runAsNonRoot.
+            runAsUser: 10001
+            {{- end }}
+
             capabilities:
               drop:
                 - ALL
