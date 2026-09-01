@@ -9,3 +9,4 @@ resources:
   - verify-images.yaml
   - default-deny-network-policy.yaml
   - allow-dns-egress.yaml
+  - metrics-server.yaml
