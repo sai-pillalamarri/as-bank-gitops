@@ -15,11 +15,11 @@ workloads:
   customer-service:
     enabled: true
     kind: java
-    version: "728ca83b8076"
+    version: "65adc030c364"
 
     image:
       repository: as-bank/customer-service
-      digest: sha256:728ca83b80760c389691ee67bd6733960328599ee520e9f7fe5366568c8fddd5
+      digest: sha256:40d14f3091cfc578bee8a66556ff645bfc90ab58828d3036aa097fe17466e5ad
 
     database:
       enabled: true
@@ -56,11 +56,11 @@ workloads:
   account-service:
     enabled: true
     kind: java
-    version: "2481c56260e6"
+    version: "65adc030c364"
 
     image:
       repository: as-bank/account-service
-      digest: sha256:2481c56260e627f9b513b8240812713ed55378f1b63fcc0c917b70b6311f7a89
+      digest: sha256:b0e3a517968c9b512c13389dc4afad565aee6ef5e7c1637391d26ded34a471e7
 
     database:
       enabled: true
@@ -98,11 +98,11 @@ workloads:
   transaction-service:
     enabled: true
     kind: java
-    version: "84446de5b9fc"
+    version: "65adc030c364"
 
     image:
       repository: as-bank/transaction-service
-      digest: sha256:84446de5b9fc93a3f4088e9790f4c151b03130e55a7ba49e44eb66c94ea45690
+      digest: sha256:b8dd0374defc5858da30df7c87bfc780baf0276ecfd2a7733a7c307f88f60059
 
     database:
       enabled: true
@@ -139,11 +139,11 @@ workloads:
   frontend:
     enabled: true
     kind: frontend
-    version: "e72df72e41da"
+    version: "65adc030c364"
 
     image:
       repository: as-bank/frontend
-      digest: sha256:e72df72e41da12cefc02972384617cfd0b959353b3def795a288ce51070079a2
+      digest: sha256:b79b05a14139cabb9cff99e66429b82002ca6b7369a1fd1f9435e3e0a919dde4
 
     database:
       enabled: false
