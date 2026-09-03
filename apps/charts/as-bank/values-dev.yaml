@@ -10,6 +10,13 @@ global:
 
   network:
     vpcCidr: 10.10.0.0/16
+    albSourceCidrs:
+      - 10.10.0.0/24
+      - 10.10.1.0/24
+edge:
+  enabled: true
+  frontendHost: dev.aslearnings.online
+  apiHost: api-dev.aslearnings.online
 
 workloads:
   customer-service:
@@ -52,6 +59,7 @@ workloads:
         - account-service
       egressTo: []
       allowHttpsEgress: true
+      allowAlbIngress: true
 
   account-service:
     enabled: true
@@ -94,6 +102,7 @@ workloads:
       egressTo:
         - customer-service
       allowHttpsEgress: true
+      allowAlbIngress: true
 
   transaction-service:
     enabled: true
@@ -135,6 +144,7 @@ workloads:
       egressTo:
         - account-service
       allowHttpsEgress: true
+      allowAlbIngress: true
 
   frontend:
     enabled: true
@@ -178,3 +188,4 @@ workloads:
       ingressFrom: []
       egressTo: []
       allowHttpsEgress: false
+      allowAlbIngress: true

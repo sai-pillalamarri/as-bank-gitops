@@ -96,6 +96,16 @@ metadata:
   namespace: {{ .root.Values.global.namespace }}
   labels:
     {{- include "as-bank-library.labels" . | nindent 4 }}
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-protocol: HTTP
+    {{- if eq .workload.kind "java" }}
+    alb.ingress.kubernetes.io/healthcheck-port: "8081"
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .workload.probes.readinessPath | quote }}
+    {{- else }}
+    alb.ingress.kubernetes.io/healthcheck-port: "8080"
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .workload.probes.readinessPath | quote }}
+    {{- end }}
+    alb.ingress.kubernetes.io/success-codes: "200"
 spec:
   type: ClusterIP
 
@@ -337,7 +347,9 @@ spec:
 {{- end }}
 
 {{- define "as-bank-library.networkPolicy" -}}
-{{- $hasIngress := gt (len .workload.network.ingressFrom) 0 -}}
+{{- $hasPodIngress := gt (len .workload.network.ingressFrom) 0 -}}
+{{- $hasAlbIngress := .workload.network.allowAlbIngress | default false -}}
+{{- $hasIngress := or $hasPodIngress $hasAlbIngress -}}
 {{- $hasServiceEgress := gt (len .workload.network.egressTo) 0 -}}
 {{- $hasEgress := or $hasServiceEgress .workload.database.enabled .workload.network.allowHttpsEgress -}}
 
@@ -358,7 +370,9 @@ spec:
     - Egress
 
   {{- if $hasIngress }}
+    {{- if $hasIngress }}
   ingress:
+    {{- if $hasPodIngress }}
     - from:
         {{- range .workload.network.ingressFrom }}
         - podSelector:
@@ -370,8 +384,26 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
+    {{- end }}
+
+    {{- if $hasAlbIngress }}
+    - from:
+        {{- range .root.Values.global.network.albSourceCidrs }}
+        - ipBlock:
+            cidr: {{ . }}
+        {{- end }}
+
+      ports:
+        - protocol: TCP
+          port: 8080
+        {{- if eq .workload.kind "java" }}
+        - protocol: TCP
+          port: 8081
+        {{- end }}
+    {{- end }}
   {{- else }}
   ingress: []
+  {{- end }}
   {{- end }}
 
   {{- if $hasEgress }}
