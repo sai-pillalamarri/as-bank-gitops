@@ -17,6 +17,7 @@ edge:
   enabled: true
   frontendHost: dev.aslearnings.online
   apiHost: api-dev.aslearnings.online
+  originHost: origin-dev.aslearnings.online
 
 workloads:
   customer-service:
