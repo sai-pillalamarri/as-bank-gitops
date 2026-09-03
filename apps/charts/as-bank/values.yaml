@@ -18,5 +18,6 @@ edge:
   enabled: false
   frontendHost: ""
   apiHost: ""
+  originHost: ""
 
 workloads: {}
