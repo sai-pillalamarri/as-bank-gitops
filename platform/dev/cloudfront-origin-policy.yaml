@@ -1,0 +1,86 @@
+apiVersion: policies.kyverno.io/v1
+kind: NamespacedMutatingPolicy
+metadata:
+  name: inject-cloudfront-origin-condition
+  namespace: as-bank-dev
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  failurePolicy: Fail
+
+  evaluation:
+    admission:
+      enabled: true
+    mutateExisting:
+      enabled: false
+
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - networking.k8s.io
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - ingresses
+        resourceNames:
+          - as-bank-edge
+
+  variables:
+    - name: originSecret
+      expression: >-
+        resource.Get(
+          "v1",
+          "secrets",
+          "as-bank-dev",
+          "cloudfront-origin-header"
+        )
+
+    - name: headerName
+      expression: >-
+        string(base64.decode(variables.originSecret.data["name"]))
+
+    - name: headerValue
+      expression: >-
+        string(base64.decode(variables.originSecret.data["value"]))
+
+    - name: condition
+      expression: >-
+        '[{"field":"http-header","httpHeaderConfig":{"httpHeaderName":"' +
+        variables.headerName +
+        '","values":["' +
+        variables.headerValue +
+        '"]}}]'
+
+  mutations:
+    - patchType: JSONPatch
+      jsonPatch:
+        expression: |
+          [
+            JSONPatch{
+              op: "add",
+              path: "/metadata/annotations/" +
+                    jsonpatch.escapeKey("alb.ingress.kubernetes.io/conditions.frontend"),
+              value: variables.condition
+            },
+            JSONPatch{
+              op: "add",
+              path: "/metadata/annotations/" +
+                    jsonpatch.escapeKey("alb.ingress.kubernetes.io/conditions.customer-service"),
+              value: variables.condition
+            },
+            JSONPatch{
+              op: "add",
+              path: "/metadata/annotations/" +
+                    jsonpatch.escapeKey("alb.ingress.kubernetes.io/conditions.account-service"),
+              value: variables.condition
+            },
+            JSONPatch{
+              op: "add",
+              path: "/metadata/annotations/" +
+                    jsonpatch.escapeKey("alb.ingress.kubernetes.io/conditions.transaction-service"),
+              value: variables.condition
+            }
+          ]

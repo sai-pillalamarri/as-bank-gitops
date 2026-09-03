@@ -5,6 +5,9 @@ resources:
   - namespace.yaml
   - default-service-account.yaml
   - secret-store.yaml
+  - cloudfront-origin-secret.yaml
+  - cloudfront-origin-rbac.yaml
+  - cloudfront-origin-policy.yaml
   - workload-hardening.yaml
   - verify-images.yaml
   - default-deny-network-policy.yaml
