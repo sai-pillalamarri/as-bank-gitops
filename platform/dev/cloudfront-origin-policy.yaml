@@ -34,7 +34,6 @@ spec:
         resource.Get(
           "v1",
           "secrets",
-          "as-bank-dev",
           "cloudfront-origin-header"
         )
 
