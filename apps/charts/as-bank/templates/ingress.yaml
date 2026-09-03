@@ -1,0 +1,83 @@
+{{- if .Values.edge.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: as-bank-edge
+  namespace: {{ .Values.global.namespace }}
+
+  annotations:
+    alb.ingress.kubernetes.io/group.name: as-bank
+    alb.ingress.kubernetes.io/group.order: "10"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/ip-address-type: ipv4
+
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+
+    # Several services share /api/v1, so prefix routing is not specific enough.
+    alb.ingress.kubernetes.io/use-regex-path-match: "true"
+
+    alb.ingress.kubernetes.io/tags: >-
+      Project=as-bank,
+      Environment={{ .Values.global.environment }},
+      ManagedBy=aws-load-balancer-controller
+
+spec:
+  ingressClassName: alb
+
+  rules:
+    - host: {{ .Values.edge.frontendHost }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080
+
+    - host: {{ .Values.edge.apiHost }}
+      http:
+        paths:
+          - path: "/^/api/v1/customers/[^/]+/accounts.*$"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: account-service
+                port:
+                  number: 8080
+
+          - path: "/^/api/v1/accounts/[^/]+/transactions.*$"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transaction-service
+                port:
+                  number: 8080
+
+          - path: "/^/api/v1/customers/[^/]+/?$"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: customer-service
+                port:
+                  number: 8080
+
+          - path: "/^/api/v1/accounts/[^/]+/?$"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: account-service
+                port:
+                  number: 8080
+
+          - path: "/^/api/v1/(transfers|deposits|withdrawals).*$"
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: transaction-service
+                port:
+                  number: 8080
+{{- end }}
